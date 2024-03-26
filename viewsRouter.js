@@ -52,4 +52,99 @@ router.get('/carts/:cid', async (req, res) => {
   }
 });
 
+
+ 
+
+
+const session = require('express-session'); // Importa express-session
+
+// Simulación de una base de datos de usuarios
+const users = [
+  { id: 1, username: 'usuario1', email: 'usuario1@ejemplo.com', password: 'contraseña1', role: 'usuario' },
+  { id: 2, username: 'adminCoder', email: 'adminCoder@coder.com', password: 'adminCod3r123', role: 'admin' }
+];
+// Configuración de express-session
+router.use(session({
+    secret: 'secreto', // Clave secreta para firmar la cookie de sesión
+    resave: false,
+    saveUninitialized: true
+}));
+
+// Ruta para mostrar el formulario de registro
+router.get('/signup', (req, res) => {
+    res.render('signup'); // Renderiza la vista de registro
+});
+
+// Ruta para procesar el registro de usuario
+router.post('/signup', (req, res) => {
+    // Aquí se procesaría la información del formulario de registro
+    // Código para registrar al usuario en la base de datos
+    res.redirect('/login'); // Redirige al usuario a la página de inicio de sesión después de registrarse
+});
+
+// Ruta para mostrar el formulario de inicio de sesión
+router.get('/login', (req, res) => {
+    res.render('login'); // Renderiza la vista de inicio de sesión
+});
+
+// Ruta para procesar el inicio de sesión
+router.post('/login', (req, res) => {
+  const { email, password } = req.body;
+
+  // Verificar las credenciales del usuario
+  const user = users.find(u => u.email === email && u.password === password);
+
+  if (user) {
+      // Las credenciales son válidas
+      // Establecer el usuario en la sesión
+      req.session.user = user;
+
+      // Verificar si el usuario es un administrador
+      if (user.email === 'adminCoder@coder.com' && user.password === 'adminCod3r123') {
+          user.role = 'admin'; // Asignar el rol de administrador al usuario
+      } else {
+          user.role = 'usuario'; // Asignar el rol de usuario normal al usuario
+      }
+
+      // Redirigir al usuario a la página de productos
+      res.redirect('/products');
+  } else {
+      // Las credenciales son inválidas
+      res.redirect('/login');
+  }
+});
+
+
+
+
+// Ruta para mostrar la página de productos
+router.get('/products', (req, res) => {
+  // Verificar si el usuario está autenticado (por ejemplo, mediante sesiones)
+  if (req.session.user) {
+      // Si el usuario está autenticado, pasamos los datos del usuario a la vista
+      const user = req.session.user;
+      // Renderizamos la vista de productos y pasamos los datos del usuario como una variable
+      res.render('products', { user });
+  } else {
+      // Si el usuario no está autenticado, redirigimos al usuario al formulario de inicio de sesión
+      res.redirect('/login');
+  }
+});
+
+
+router.post('/logout', (req, res) => {
+  // Destruir la sesión
+  req.session.destroy(err => {
+      if (err) {
+          console.error('Error al destruir la sesión:', err);
+      } else {
+          console.log('Sesión de usuario destruida');
+          // Redirigir al usuario a la página de inicio de sesión
+          res.redirect('/login');
+      }
+  });
+});
+
+
+
 module.exports = router;
